@@ -15,24 +15,26 @@ class Nasa(commands.Cog):
     def __init__(self, client):
         self.client = client
 
+
     @commands.command(usage = "apod", description = "Astronomy Picture of the day", help = "This command shows the  NASA astronomy picture of the day", extras={"category": ""})
     @commands.check(plugin_enabled)
-    async def apod(self, ctx):
-        url = f"https://api.nasa.gov/planetary/apod?api_key={API_KEY}&thumbs=True"
-        data = await get_url_json(url)
-
-        em = discord.Embed(
-            title = data['title'],
-            color = ctx.author.color
-        )
-        em.description = data["explanation"]
+    async def apod(self, ctx, extra:str=None):
+        """
+        NASA Astronomy Picture of the Day
+        """
+        
+        date = datetime.datetime.now().strftime('%Y-%m-%d')
+        url = 'https://api.nasa.gov/planetary/apod?api_key={NASA}&thumbs=True&hd'
+        response = requests.get(url.format(NASA=API_KEY))
+        data = response.json()
+        embed = discord.Embed(title=data['title'], description=data['explanation'], color=0x00168B)
         if data["media_type"] == "image":
-            em.set_image(url=data["hdurl"])
+            embed.set_image(url=data["hdurl"])
         elif data["media_type"] == "video":
-            em.set_image(url=data['thumbnail'])
-        em.timestamp = datetime.datetime.now()
-        em.set_footer(text=data['copyright'])
-        await ctx.send(embed=em)
+                embed.set_image(url=data['thumbnail'])
+        embed.add_field(name='Link to image of the day/video', value=data['url'], inline=False)
+        embed.set_footer(text=f'{date}')
+        await ctx.send(embed=embed)
 
 def setup(client):
     client.add_cog(Nasa(client))
